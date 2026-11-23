@@ -1,3 +1,4 @@
+import path from "path";
 import { test, expect, drag_and_drop_file } from "@self/tootils";
 
 test("Image drag-to-upload replaces an image successfully.", async ({
@@ -27,6 +28,30 @@ test("Image drag-to-upload replaces an image successfully.", async ({
 	await expect(page.getByLabel("# Upload Events")).toHaveValue("2");
 	const newPages = context.pages();
 	expect(newPages.length).toBe(initialPages.length);
+});
+
+test("Image dropped from the desktop replaces an image successfully.", async ({
+	page
+}) => {
+	// A scripted DataTransfer stays readable after the drop event, unlike a real one.
+	const cdp = await page.context().newCDPSession(page);
+	const drop_file = async (file: string): Promise<void> => {
+		const box = (await page.getByTestId("image").first().boundingBox())!;
+		for (const type of ["dragEnter", "dragOver", "drop"] as const) {
+			await cdp.send("Input.dispatchDragEvent", {
+				type,
+				x: box.x + box.width / 2,
+				y: box.y + box.height / 2,
+				data: { items: [], files: [file], dragOperationsMask: 1 }
+			});
+		}
+	};
+
+	await drop_file(path.resolve("./test/files/cheetah1.jpg"));
+	await expect(page.getByLabel("# Upload Events")).toHaveValue("1");
+
+	await drop_file(path.resolve("./test/files/bus.png"));
+	await expect(page.getByLabel("# Upload Events")).toHaveValue("2");
 });
 
 test("Image copy from clipboard dispatches upload event.", async ({ page }) => {

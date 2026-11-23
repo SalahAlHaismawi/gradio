@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { tick, type Snippet } from "svelte";
+	import { flushSync, tick, type Snippet } from "svelte";
 	import { BlockLabel, IconButtonWrapper, IconButton } from "@gradio/atoms";
 	import { Clear, Image as ImageIcon } from "@gradio/icons";
 	import { FullscreenButton } from "@gradio/atoms";
@@ -208,11 +208,10 @@
 
 		if (value) {
 			handle_clear();
-			await tick();
 		}
 
 		active_source = "upload";
-		await tick();
+		flushSync();
 		upload_input.load_files_from_drop(evt);
 	}
 </script>
